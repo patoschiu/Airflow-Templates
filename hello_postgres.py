@@ -23,11 +23,12 @@ with DAG(
     create_pet_table_task = PostgresOperator(
         task_id="create_movies_table",
         postgres_conn_id="postgres_default",
+        sql="sql/deniro.sql",
         sql="""
             CREATE TABLE IF NOT EXISTS movies (
             Year VARCHAR NOT NULL,
             Score VARCHAR NOT NULL,
-            Title VARCHAR NOT NULL,
+            Title VARCHAR NOT NULL);
           """,
     )
 
