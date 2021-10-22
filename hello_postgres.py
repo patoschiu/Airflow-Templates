@@ -15,7 +15,7 @@ def create_sql_statement(ti):
     with open(csv_path) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
         for row in csv_reader:
-            insert = f'INSERT INTO {table_name} (' + ", ".join(row.keys()) + ") VALUES " +'("'+ '", "'.join(row.values()) +'");\n'
+            insert = f'INSERT INTO {table_name}(' + ", ".join(row.keys()) + ") VALUES " +"('"+ "', '".join(row.values()) +"');\n"
             sql_statement += insert
     ti.xcom_push(key='sql_load_table', value=sql_statement)
 
