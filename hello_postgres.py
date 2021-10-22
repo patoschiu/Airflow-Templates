@@ -8,13 +8,16 @@ from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
 
 
-def create_sql_file(csv_path, sql_path, table_name):
-    with open(sql_path,'w') as sql_file:
-        with open(csv_path) as csv_file:
-            csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
-            for row in csv_reader:
-                insert = f'INSERT INTO {table_name} (' + ", ".join(row.keys()) + ") VALUES " +'("'+ '", "'.join(row.values()) +'");\n'
-                sql_file.write(insert)
+def create_sql_statement(ti):
+    sql_statement = ""
+    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv')
+    table_name = "moview"
+    with open(csv_path) as csv_file:
+        csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
+        for row in csv_reader:
+            insert = f'INSERT INTO {table_name} (' + ", ".join(row.keys()) + ") VALUES " +'("'+ '", "'.join(row.values()) +'");\n'
+            sql_statement += insert
+    ti.xcom_push(key='sql_load_table', value=sql_statement)
 
 
 with DAG(
@@ -35,19 +38,14 @@ with DAG(
     )
 
     create_sql_file_task = PythonOperator(
-        task_id='create_sql_file_task',
-        python_callable=create_sql_file,
-        op_kwargs={
-            "csv_path":os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv'),
-            "sql_path":os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.sql'),
-            "table_name":""
-        },
+        task_id='create_sql_statement',
+        python_callable=create_sql_statement,
     )
 
     populate_movies_table_task = PostgresOperator(
         task_id="populate_movies_table_task",
         postgres_conn_id="postgres_default",
-        sql=os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.sql'),
+        sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
     )
 
     create_pet_table_task >> create_sql_file_task >> populate_movies_table_task
