@@ -36,7 +36,7 @@ with DAG(
         python_callable=create_sql_file,
         op_kwargs={
             "csv_path":'deniro.csv',
-            "sql_path":'sql/deniro.sql',
+            "sql_path":'deniro.sql',
             "table_name":""
         },
     )
@@ -44,7 +44,7 @@ with DAG(
     populate_movies_table_task = PostgresOperator(
         task_id="populate_movies_table_task",
         postgres_conn_id="postgres_default",
-        sql="sql/deniro.sql",
+        sql="deniro.sql",
     )
 
     create_pet_table_task >> create_sql_file_task >> populate_movies_table_task
