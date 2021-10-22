@@ -1,5 +1,8 @@
 from datetime import datetime
 import csv
+import os 
+
+
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
@@ -35,8 +38,8 @@ with DAG(
         task_id='create_sql_file_task',
         python_callable=create_sql_file,
         op_kwargs={
-            "csv_path":'deniro.csv',
-            "sql_path":'deniro.sql',
+            "csv_path":os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv'),
+            "sql_path":os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.sql'),
             "table_name":""
         },
     )
@@ -44,7 +47,7 @@ with DAG(
     populate_movies_table_task = PostgresOperator(
         task_id="populate_movies_table_task",
         postgres_conn_id="postgres_default",
-        sql="deniro.sql",
+        sql=os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.sql'),
     )
 
     create_pet_table_task >> create_sql_file_task >> populate_movies_table_task
