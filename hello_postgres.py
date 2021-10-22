@@ -11,7 +11,7 @@ from airflow.operators.python_operator import PythonOperator
 def create_sql_statement(ti):
     sql_statement = ""
     csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv')
-    table_name = "moview"
+    table_name = "movies"
     with open(csv_path) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
         for row in csv_reader:
