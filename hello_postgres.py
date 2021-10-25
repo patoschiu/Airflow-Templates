@@ -43,7 +43,7 @@ with DAG(
     )
 
     populate_movies_table_task = PostgresOperator(
-        task_id="populate_movies_table_task",
+        task_id="populate_movies_tables",
         postgres_conn_id="postgres_default",
         sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
     )
