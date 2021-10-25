@@ -21,7 +21,7 @@ def create_sql_statement(ti):
 
 
 with DAG(
-    dag_id="postgres_operator_dag",
+    dag_id="hello_postgres",
     start_date=datetime(2020, 2, 2),
     schedule_interval="@once",
     catchup=False,
