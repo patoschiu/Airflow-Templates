@@ -26,7 +26,7 @@ with DAG(
     schedule_interval="@once",
     catchup=False,
 ) as dag:
-    create_pet_table_task = PostgresOperator(
+    create_movies_table_task = PostgresOperator(
         task_id="create_movies_table",
         postgres_conn_id="postgres_default",
         sql="""
@@ -48,4 +48,4 @@ with DAG(
         sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
     )
 
-    create_pet_table_task >> create_sql_file_task >> populate_movies_table_task
+    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task
