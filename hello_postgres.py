@@ -31,6 +31,18 @@ def insert_csv_into_postgres():
     #ti.xcom_push(key='sql_load_table', value=sql_statement)
 
 
+def create_sql_statement(ti):
+    sql_statement = ""
+    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv')
+    table_name = "movies"
+    with open(csv_path) as csv_file:
+        csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
+        for row in csv_reader:
+            insert = f'INSERT INTO {table_name}(' + ", ".join(row.keys()) + ") VALUES " +"('"+ "', '".join(row.values()) +"');\n"
+            sql_statement += insert
+    ti.xcom_push(key='sql_load_table', value=sql_statement)
+
+
 def print_postgres_table():
     request = "SELECT * FROM movies;"
     ps_hook = PostgresHook()
@@ -59,22 +71,32 @@ with DAG(
             Title VARCHAR NOT NULL);
         """
     )
+    create_sql_file_task = PythonOperator(
+        task_id='create_sql_statement',
+        python_callable=create_sql_statement,
+    )
 
+    populate_movies_table_task = PostgresOperator(
+        task_id="populate_movies_tables",
+        postgres_conn_id="postgres_default",
+        sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
+    )
+    """
     insert_csv_into_postgres_task = PythonOperator(
         task_id='insert_csv_into_postgres',
         python_callable=insert_csv_into_postgres,
     )
-
+    """
     print_postgres_table_task = PythonOperator(
         task_id='print_postgres_table',
         python_callable=print_postgres_table,
     )
-
+    """
     #populate_movies_table_task = PostgresOperator(
     #    task_id="populate_movies_tables",
     #    postgres_conn_id="postgres_default",
     #    sql="sql/deniro/sql"
     #)
-
-    create_movies_table_task >> insert_csv_into_postgres_task  >> print_postgres_table_task
+    """
+    create_movies_table_task >> create_sql_file_task  >> populate_movies_table_task >> print_postgres_table_task
     #>> populate_movies_table_task
