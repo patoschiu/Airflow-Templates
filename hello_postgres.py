@@ -6,6 +6,8 @@ import os
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.hooks.postgres_hook import PostgresHook
+import pandas as pd
 
 
 def create_sql_statement(ti):
@@ -18,6 +20,17 @@ def create_sql_statement(ti):
             insert = f'INSERT INTO {table_name}(' + ", ".join(row.keys()) + ") VALUES " +"('"+ "', '".join(row.values()) +"');\n"
             sql_statement += insert
     ti.xcom_push(key='sql_load_table', value=sql_statement)
+
+
+def print_postgres_table():
+    request = "SELECT * FROM movies;"
+    ps_hook = PostgresHook()
+    connection = ps_hook.get_conn()
+    cursor = connection.cursor()
+    cursor.execute(request)
+    response = cursor.fetchall()
+    df = pd.DataFrame(response, columns=['Year', 'Score', 'Title'])
+    print(df.to_markdown()) 
 
 
 with DAG(
@@ -48,4 +61,9 @@ with DAG(
         sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
     )
 
-    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task
+    print_postgres_table_task = PythonOperator(
+        task_id='print_postgres_table',
+        python_callable=print_postgres_table,
+    )
+
+    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task >> print_postgres_table_task
