@@ -68,9 +68,9 @@ with DAG(
         sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
     )
 
-    print_postgres_table_task = PythonOperator(
-        task_id='print_postgres_table',
-        python_callable=print_postgres_table,
+    postgres_to_s3_task = PythonOperator(
+        task_id='postgres_to_s3',
+        python_callable=postgres_to_s3,
     )
 
-    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task >> print_postgres_table_task
+    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task >> postgres_to_s3_task
