@@ -18,7 +18,7 @@ def create_sql_statement(ti):
             insert = f'INSERT INTO {table_name}(' + ", ".join(row.keys()) + ") VALUES " +"('"+ "', '".join(row.values()) +"');\n"
             sql_statement += insert
     
-    sql_output_filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),'sql','deniro.sql')
+    sql_output_filepath = os.path.join('opt','airflow','dags','sql','deniro.sql')
     with open(sql_output_filepath,'w') as sql_file:
         sql_file.writelines(sql_statement)
     #ti.xcom_push(key='sql_load_table', value=sql_statement)
