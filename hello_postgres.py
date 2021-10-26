@@ -39,8 +39,7 @@ def print_postgres_table():
     cursor.execute(request)
     response = cursor.fetchall()
     df = pd.DataFrame(response, columns=['Year', 'Score', 'Title'])
-    for row in df:
-        print(row)
+    print(df.to_markdown()) 
 
 
 with DAG(
