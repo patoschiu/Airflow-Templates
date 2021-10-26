@@ -1,2 +1,4 @@
 *.sql
 test.py
+test
+.venv

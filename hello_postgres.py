@@ -1,18 +1,20 @@
 from datetime import datetime
 import csv
 import os 
+import io
 
 
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.hooks.postgres_hook import PostgresHook
+from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 import pandas as pd
 
 
 def create_sql_statement(ti):
     sql_statement = ""
-    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv')
+    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'csv','deniro.csv')
     table_name = "movies"
     with open(csv_path) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
@@ -22,7 +24,7 @@ def create_sql_statement(ti):
     ti.xcom_push(key='sql_load_table', value=sql_statement)
 
 
-def print_postgres_table():
+def postgres_to_s3():
     request = "SELECT * FROM movies;"
     ps_hook = PostgresHook()
     connection = ps_hook.get_conn()
@@ -31,6 +33,10 @@ def print_postgres_table():
     response = cursor.fetchall()
     df = pd.DataFrame(response, columns=['Year', 'Score', 'Title'])
     print(df.to_markdown()) 
+    s3_hook = S3Hook(aws_conn_id='aws_s3')
+    with io.BytesIO() as buffer:                                
+        df.to_parquet(buffer, engine='auto')
+        s3_hook.load_file_obj(buffer, key='postgres_export/movies.parquet', bucket_name='s3-data-bootcamp-20211026142352407700000004')
 
 
 with DAG(
@@ -43,6 +49,7 @@ with DAG(
         task_id="create_movies_table",
         postgres_conn_id="postgres_default",
         sql="""
+            DROP TABLE movies;
             CREATE TABLE IF NOT EXISTS movies (
             Year VARCHAR NOT NULL,
             Score VARCHAR NOT NULL,
