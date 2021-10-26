@@ -34,10 +34,10 @@ def postgres_to_s3():
     df = pd.DataFrame(response, columns=['Year', 'Score', 'Title'])
     print(df.to_markdown()) 
     s3_hook = S3Hook(aws_conn_id='aws_s3')
-    s3_hook.create_bucket(bucket_name="s3://postgres-parquet-export-test")
+    #s3_hook.create_bucket(bucket_name="s3://postgres-parquet-export-test")
     with io.BytesIO() as buffer:                                
         df.to_parquet(buffer, engine='auto')
-        s3_hook.load_file_obj(buffer, key='movies.parquet', bucket_name='s3://postgres-parquet-export')
+        s3_hook.load_file_obj(buffer, key='movies.parquet', bucket_name='postgres-parquet-export')
 
 
 with DAG(
