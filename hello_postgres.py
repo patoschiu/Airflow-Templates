@@ -7,6 +7,7 @@ from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
 from airflow.hooks.postgres_hook import PostgresHook
+import pandas as pd
 
 
 def insert_csv_into_postgres():
@@ -31,13 +32,14 @@ def insert_csv_into_postgres():
 
 
 def print_postgres_table():
-    request = "SELECT * FROM movies:"
+    request = "SELECT * FROM movies;"
     ps_hook = PostgresHook()
     connection = ps_hook.get_conn()
     cursor = connection.cursor()
     cursor.execute(request)
     response = cursor.fetchall()
-    for row in response:
+    df = pd.DataFrame(response, columns=['Year', 'Score', 'Title'])
+    for row in df:
         print(row)
 
 
