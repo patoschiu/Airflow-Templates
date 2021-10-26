@@ -6,6 +6,7 @@ import os
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.operators.python_operator import PythonOperator
+from airflow.hooks.postgres_hook import PostgresHook
 
 
 def create_sql_statement(ti):
@@ -18,9 +19,15 @@ def create_sql_statement(ti):
             insert = f'INSERT INTO {table_name}(' + ", ".join(row.keys()) + ") VALUES " +"('"+ "', '".join(row.values()) +"');\n"
             sql_statement += insert
     
-    sql_output_filepath = '/opt/airflow/dags/deniro.sql'
-    with open(sql_output_filepath,'w') as sql_file:
-        sql_file.writelines(sql_statement)
+    ps_hook = PostgresHook()
+    connection = ps_hook.get_conn()
+    cursor = connection.cursor()
+    cursor.execute(sql_statement)
+    cursor.commit()
+
+    #sql_output_filepath = '/opt/airflow/dags/deniro.sql'
+    #with open(sql_output_filepath,'w') as sql_file:
+    #    sql_file.writelines(sql_statement)
     #ti.xcom_push(key='sql_load_table', value=sql_statement)
 
 
@@ -46,10 +53,11 @@ with DAG(
         python_callable=create_sql_statement,
     )
 
-    populate_movies_table_task = PostgresOperator(
-        task_id="populate_movies_tables",
-        postgres_conn_id="postgres_default",
-        sql="sql/deniro/sql"
-    )
+    #populate_movies_table_task = PostgresOperator(
+    #    task_id="populate_movies_tables",
+    #    postgres_conn_id="postgres_default",
+    #    sql="sql/deniro/sql"
+    #)
 
-    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task
+    create_movies_table_task >> create_sql_file_task 
+    #>> populate_movies_table_task
