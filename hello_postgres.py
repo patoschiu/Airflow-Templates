@@ -23,8 +23,7 @@ def create_sql_statement(ti):
     connection = ps_hook.get_conn()
     cursor = connection.cursor()
     cursor.execute(sql_statement)
-    cursor.commit()
-
+    #cursor.commit()
     #sql_output_filepath = '/opt/airflow/dags/deniro.sql'
     #with open(sql_output_filepath,'w') as sql_file:
     #    sql_file.writelines(sql_statement)
