@@ -33,7 +33,7 @@ def insert_csv_into_postgres():
 
 def create_sql_statement(ti):
     sql_statement = ""
-    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'deniro.csv')
+    csv_path = '/opt/airflow/dags/csv/deniro.csv'
     table_name = "movies"
     with open(csv_path) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
