@@ -12,16 +12,25 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 import pandas as pd
 
 
-def create_sql_statement(ti):
+def insert_csv_into_postgres():
     sql_statement = ""
-    csv_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),'csv','deniro.csv')
+    csv_input_filepath = '/opt/airflow/dags/csv/deniro.csv'
     table_name = "movies"
-    with open(csv_path) as csv_file:
+    with open(csv_input_filepath) as csv_file:
         csv_reader = csv.DictReader(csv_file, delimiter=',', quotechar='"')
         for row in csv_reader:
             insert = f'INSERT INTO {table_name}(' + ", ".join(row.keys()) + ") VALUES " +"('"+ "', '".join(row.values()) +"');\n"
             sql_statement += insert
-    ti.xcom_push(key='sql_load_table', value=sql_statement)
+    
+    ps_hook = PostgresHook()
+    connection = ps_hook.get_conn()
+    cursor = connection.cursor()
+    cursor.run(sql_statement)
+    #cursor.commit()
+    #sql_output_filepath = '/opt/airflow/dags/deniro.sql'
+    #with open(sql_output_filepath,'w') as sql_file:
+    #    sql_file.writelines(sql_statement)
+    #ti.xcom_push(key='sql_load_table', value=sql_statement)
 
 
 def postgres_to_s3():
@@ -59,19 +68,20 @@ with DAG(
     )
 
     create_sql_file_task = PythonOperator(
-        task_id='create_sql_statement',
-        python_callable=create_sql_statement,
+        task_id='insert_csv_into_postgres',
+        python_callable=insert_csv_into_postgres,
     )
 
-    populate_movies_table_task = PostgresOperator(
-        task_id="populate_movies_tables",
-        postgres_conn_id="postgres_default",
-        sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
-    )
+    #populate_movies_table_task = PostgresOperator(
+    #    task_id="populate_movies_tables",
+    #    postgres_conn_id="postgres_default",
+    #    sql="{{ ti.xcom_pull(key='sql_load_table',task_ids='create_sql_statement') }}"
+    #)
 
     postgres_to_s3_task = PythonOperator(
         task_id='postgres_to_s3',
         python_callable=postgres_to_s3,
     )
 
-    create_movies_table_task >> create_sql_file_task >> populate_movies_table_task >> postgres_to_s3_task
+    create_movies_table_task >> create_sql_file_task >> postgres_to_s3_task 
+    #>> postgres_to_s3_task
