@@ -50,7 +50,7 @@ with DAG(
         task_id="create_movies_table",
         postgres_conn_id="postgres_default",
         sql="""
-            DROP TABLE movies;
+            DROP TABLE IF EXISTS movies;
             CREATE TABLE IF NOT EXISTS movies (
             Year VARCHAR NOT NULL,
             Score VARCHAR NOT NULL,
